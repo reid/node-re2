@@ -13,12 +13,11 @@ using std::string;
 using std::vector;
 
 using v8::Array;
-using v8::Integer;
+using v8::Number;
 using v8::Local;
 using v8::String;
 using v8::Value;
-
-using node::Buffer;
+using v8::Handle;
 
 
 inline int getMaxSubmatch(const char* data, size_t size) {
@@ -192,20 +191,20 @@ inline string replace(const NanCallback& replacer, const vector<StringPiece>& gr
 			const StringPiece& item = groups[i];
 			argv.push_back(NanNewBufferHandle(item.data(), item.size()));
 		}
-		argv.push_back(NanNew<Integer>(groups[0].data() - str.data()));
+		argv.push_back(NanNew<Number>(groups[0].data() - str.data()));
 	} else {
 		for (size_t i = 0, n = groups.size(); i < n; ++i) {
 			const StringPiece& item = groups[i];
 			argv.push_back(NanNew<String>(item.data(), item.size()));
 		}
-		argv.push_back(NanNew<Integer>(getUtf16Length(str.data(), groups[0].data())));
+		argv.push_back(NanNew<Number>(getUtf16Length(str.data(), groups[0].data())));
 	}
 	argv.push_back(input);
 
-	Local<Value> result(Local<Value>::New(replacer.Call(argv.size(), &argv[0])));
+	Local<Value> result(NanNew<Value>(replacer.Call(argv.size(), &argv[0])));
 
-	if (Buffer::HasInstance(result)) {
-		return string(Buffer::Data(result), Buffer::Length(result));
+	if (node::Buffer::HasInstance(result)) {
+		return string(node::Buffer::Data(result), node::Buffer::Length(result));
 	}
 
 	NanUtf8String val(result->ToString());
@@ -283,8 +282,8 @@ NAN_METHOD(WrappedRE2::Replace) {
 	if (args[1]->IsFunction()) {
 		Local<Function> cb(args[1].As<Function>());
 		result = replace(re2, str, NanCallback(cb), args[0], requiresBuffers(cb));
-	} else if (Buffer::HasInstance(args[1])) {
-		result = replace(re2, str, Buffer::Data(args[1]), Buffer::Length(args[1]));
+	} else if (node::Buffer::HasInstance(args[1])) {
+		result = replace(re2, str, node::Buffer::Data(args[1]), node::Buffer::Length(args[1]));
 	} else {
 		NanUtf8String s(args[1]->ToString());
 		result = replace(re2, str, *s, s.length());

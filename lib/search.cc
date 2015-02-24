@@ -2,7 +2,7 @@
 #include "./util.h"
 
 
-using v8::Integer;
+using v8::Number;
 
 
 NAN_METHOD(WrappedRE2::Search) {
@@ -22,7 +22,7 @@ NAN_METHOD(WrappedRE2::Search) {
 	StringPiece match;
 
 	if (re2->regexp.Match(a, 0, a.size, RE2::UNANCHORED, &match, 1)) {
-		NanReturnValue(NanNew<Integer>(a.isBuffer ? match.data() - a.data :
+		NanReturnValue(NanNew<Number>(a.isBuffer ? match.data() - a.data :
 			getUtf16Length(a.data, match.data())));
 	}
 

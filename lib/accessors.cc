@@ -1,7 +1,7 @@
 #include "./wrapped_re2.h"
 
 
-using v8::Integer;
+using v8::Number;
 
 
 NAN_GETTER(WrappedRE2::GetSource) {
@@ -35,7 +35,7 @@ NAN_GETTER(WrappedRE2::GetMultiline) {
 NAN_GETTER(WrappedRE2::GetLastIndex) {
 	NanScope();
 	WrappedRE2* re2 = ObjectWrap::Unwrap<WrappedRE2>(args.This());
-	NanReturnValue(NanNew<Integer>(re2->lastIndex));
+	NanReturnValue(NanNew<Number>(re2->lastIndex));
 }
 
 

@@ -11,9 +11,7 @@ using v8::Local;
 using v8::RegExp;
 using v8::String;
 using v8::Value;
-
-using node::Buffer;
-
+using v8::Function;
 
 static char hex[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
@@ -94,7 +92,7 @@ inline bool translateRegExp(const char* data, size_t size, vector<char>& buffer)
 
 
 NAN_METHOD(WrappedRE2::New) {
-	NanScope();
+	NanEscapableScope();
 
 	if (args.IsConstructCall()) {
 		// process arguments
@@ -115,9 +113,9 @@ NAN_METHOD(WrappedRE2::New) {
 				t->WriteUtf8(&buffer[0]);
 				size = buffer.size() - 1;
 				data = &buffer[0];
-			} else if (Buffer::HasInstance(args[1])) {
-				size = Buffer::Length(args[1]);
-				data = Buffer::Data(args[1]);
+			} else if (node::Buffer::HasInstance(args[1])) {
+				size = node::Buffer::Length(args[1]);
+				data = node::Buffer::Data(args[1]);
 			}
 			for (size_t i = 0; i < size; ++i) {
 				switch (data[i]) {
@@ -137,9 +135,9 @@ NAN_METHOD(WrappedRE2::New) {
 
 		bool needConversion = true;
 
-		if (Buffer::HasInstance(args[0])) {
-			size = Buffer::Length(args[0]);
-			data = Buffer::Data(args[0]);
+		if (node::Buffer::HasInstance(args[0])) {
+			size = node::Buffer::Length(args[0]);
+			data = node::Buffer::Data(args[1]);
 		} else if (args[0]->IsRegExp()) {
 			const RegExp* re = RegExp::Cast(*args[0]);
 
@@ -188,7 +186,8 @@ NAN_METHOD(WrappedRE2::New) {
 
 		WrappedRE2* re2 = new WrappedRE2(StringPiece(data, size), options, global, ignoreCase, multiline);
 		re2->Wrap(args.This());
-		return args.This();
+        NanReturnThis();
+        return;
 	}
 
 	// call a constructor and return the result
@@ -197,5 +196,8 @@ NAN_METHOD(WrappedRE2::New) {
 	for (size_t i = 0, n = args.Length(); i < n; ++i) {
 		parameters[i] = args[i];
 	}
-    NanReturnValue(constructor->NewInstance(parameters.size(), &parameters[0]));
+
+    Local<Function> constructorHandle = NanNew<Function>(constructor);
+
+    NanEscapeScope(constructorHandle->NewInstance(parameters.size(), &parameters[0]));
 }

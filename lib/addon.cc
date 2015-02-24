@@ -4,29 +4,26 @@
 
 
 using v8::FunctionTemplate;
-using v8::Integer;
+using v8::Number;
 using v8::Local;
 using v8::ObjectTemplate;
 using v8::String;
 
-using node::Buffer;
 
-
-Persistent<Function> WrappedRE2::constructor;
-
+Persistent<Function> WrappedRE2::constructor; 
 
 static NAN_METHOD(GetUtf8Length) {
 	NanScope();
 	String::Value s(args[0]->ToString());
-	NanReturnValue(NanNew<Integer>(getUtf8Length(*s, *s + s.length())));
+	NanReturnValue(NanNew<Number>(getUtf8Length(*s, *s + s.length())));
 }
 
 
 static NAN_METHOD(GetUtf16Length) {
 	NanScope();
-	if (Buffer::HasInstance(args[0])) {
-		char* s = Buffer::Data(args[0]);
-		NanReturnValue(NanNew<Integer>(getUtf16Length(s, s + Buffer::Length(args[0]))));
+	if (node::Buffer::HasInstance(args[0])) {
+		char* s = node::Buffer::Data(args[0]);
+		NanReturnValue(NanNew<Number>(getUtf16Length(s, s + node::Buffer::Length(args[0]))));
 	}
 	NanReturnValue(NanNew(-1));
 }
@@ -58,12 +55,14 @@ void WrappedRE2::Initialize(Handle<Object> exports, Handle<Object> module) {
 	proto->SetAccessor(NanNew("multiline"),  GetMultiline);
 	proto->SetAccessor(NanNew("lastIndex"),  GetLastIndex, SetLastIndex);
 
-	constructor = Persistent<Function>::New(tpl->GetFunction());
-	constructor->Set(NanNew("getUtf8Length"), NanNew<FunctionTemplate>(GetUtf8Length)->GetFunction());
-	constructor->Set(NanNew("getUtf16Length"), NanNew<FunctionTemplate>(GetUtf16Length)->GetFunction());
+	Local<Function> localConstructor = tpl->GetFunction();
+	localConstructor->Set(NanNew("getUtf8Length"), NanNew<FunctionTemplate>(GetUtf8Length)->GetFunction());
+	localConstructor->Set(NanNew("getUtf16Length"), NanNew<FunctionTemplate>(GetUtf16Length)->GetFunction());
+
+    NanAssignPersistent(constructor, localConstructor);
 
 	// return constructor as module's export
-	module->Set(NanNew("exports"), constructor);
+	module->Set(NanNew("exports"), localConstructor);
 }
 
 
